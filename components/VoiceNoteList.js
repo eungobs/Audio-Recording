@@ -1,7 +1,6 @@
-// components/VoiceNoteList.js
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
-import VoiceNotePlayer from './VoiceNotePlayer';  // Import the player component
+import VoiceNotePlayer from './VoiceNotePlayer';
 
 const VoiceNoteList = ({ recordings, onDelete }) => {
   return (
@@ -11,6 +10,7 @@ const VoiceNoteList = ({ recordings, onDelete }) => {
       ) : (
         recordings.map((item) => (
           <View key={item.uri} style={styles.listItem}>
+            <Text style={styles.nameText}>{item.name}</Text> {/* Display recording name */}
             <Text>{item.date}</Text>
             <VoiceNotePlayer uri={item.uri} />
             <Button title="Delete" onPress={() => onDelete(item.uri)} />
@@ -33,6 +33,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     alignItems: 'center',
+  },
+  nameText: {
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
 });
 

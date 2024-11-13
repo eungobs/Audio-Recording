@@ -6,10 +6,8 @@ import { Audio } from 'expo-av';
 const VoiceNotePlayer = ({ uri }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0); // Track elapsed time
+  const [remainingTime, setRemainingTime] = useState(null); // Countdown time
   const [duration, setDuration] = useState(null); // Store total duration of the recording
-  const [position, setPosition] = useState(0); // Track current position during playback
 
   // Load and prepare the sound for playback
   const loadSound = async () => {
@@ -20,10 +18,12 @@ const VoiceNotePlayer = ({ uri }) => {
           { shouldPlay: false }
         );
         setSound(newSound);
-        
-        // Ensure we set duration only after sound has been loaded
-        if (status.durationMillis) {
-          setDuration(Math.floor(status.durationMillis / 1000)); // Store duration in seconds
+
+        // Set duration if the sound is successfully loaded
+        if (status.isLoaded && status.durationMillis) {
+          const durationInSeconds = Math.floor(status.durationMillis / 1000);
+          setDuration(durationInSeconds);
+          setRemainingTime(durationInSeconds); // Initialize remaining time with total duration
         }
       } catch (error) {
         console.error("Error loading sound:", error);
@@ -38,45 +38,41 @@ const VoiceNotePlayer = ({ uri }) => {
       await loadSound();
     }
 
-    if (isPlaying) {
-      // Stop playback
-      await sound.stopAsync();
-      setIsPlaying(false);
-      setPosition(0); // Reset position
-      setElapsedTime(0); // Reset elapsed time
-      setRemainingTime(null); // Reset remaining time
-    } else {
-      // Play the recording
-      await sound.playAsync();
-      setIsPlaying(true);
+    const status = await sound.getStatusAsync();
+    if (status.isLoaded) {
+      if (isPlaying) {
+        // Stop playback
+        await sound.stopAsync();
+        setIsPlaying(false);
+        setRemainingTime(duration); // Reset countdown to total duration
+      } else {
+        // Play the recording
+        await sound.playAsync();
+        setIsPlaying(true);
 
-      // Start tracking playback position and update countdown
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isPlaying) {
-          setPosition(Math.ceil(status.positionMillis / 1000)); // Update position in seconds
-          setElapsedTime(Math.floor(status.positionMillis / 1000)); // Update elapsed time
-          setRemainingTime(duration - Math.ceil(status.positionMillis / 1000)); // Remaining time countdown
-        }
-        if (status.didJustFinish) {
-          setIsPlaying(false);
-          setPosition(0);
-          setElapsedTime(0);
-          setRemainingTime(null); // Reset remaining time once finished
-        }
-      });
+        // Start tracking playback status and update countdown
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isPlaying) {
+            const currentPosition = Math.floor(status.positionMillis / 1000);
+            setRemainingTime(duration - currentPosition); // Update remaining time
+          }
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setRemainingTime(duration); // Reset countdown to total duration once finished
+          }
+        });
+      }
+    } else {
+      console.error("Sound is not loaded.");
     }
   };
 
-  // Format time in minutes or seconds
+  // Format time in minutes and seconds
   const formatTime = (seconds) => {
-    if (seconds == null) return "0 seconds"; // Handle case where seconds is null
+    if (seconds == null) return "0:00";
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    if (minutes > 0) {
-      return `${minutes} minutes`; // Show minutes if greater than 0
-    } else {
-      return `${secs < 10 ? '0' + secs : secs} seconds`; // Otherwise show seconds
-    }
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   useEffect(() => {
@@ -100,22 +96,16 @@ const VoiceNotePlayer = ({ uri }) => {
         onPress={handlePlayback}
         color="black"
       />
-      
+
       {duration !== null && (
         <Text style={styles.durationText}>
-          Duration: {formatTime(duration)} {/* Show total duration in minutes or seconds */}
-        </Text>
-      )}
-
-      {elapsedTime !== 0 && (
-        <Text style={styles.timerText}>
-          Elapsed Time: {formatTime(elapsedTime)} {/* Show real-time elapsed time */}
+          Duration: {formatTime(duration)}
         </Text>
       )}
 
       {remainingTime !== null && (
         <Text style={styles.timerText}>
-          Time remaining: {formatTime(remainingTime)} {/* Countdown timer */}
+          Time remaining: {formatTime(remainingTime)}
         </Text>
       )}
     </View>
@@ -128,11 +118,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   durationText: {
-    color: 'white', // White text for dark background
+    color: 'white',
     marginTop: 5,
   },
   timerText: {
-    color: 'white', // White text for dark background
+    color: 'white',
     marginTop: 5,
   },
 });

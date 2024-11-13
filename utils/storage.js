@@ -43,3 +43,20 @@ export const deleteVoiceNote = async (uri) => {
     console.error('Error deleting voice note', error);
   }
 };
+
+/**
+ * Update an existing voice note by its URI
+ * @param {String} uri - URI of the voice note to update
+ * @param {Object} updatedNote - The updated note data
+ */
+export const updateVoiceNote = async (uri, updatedNote) => {
+  try {
+    const voiceNotes = await getVoiceNotes();
+    const updatedVoiceNotes = voiceNotes.map((note) =>
+      note.uri === uri ? { ...note, ...updatedNote } : note
+    );
+    await saveVoiceNotes(updatedVoiceNotes);
+  } catch (error) {
+    console.error('Error updating voice note', error);
+  }
+};
