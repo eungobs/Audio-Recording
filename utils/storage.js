@@ -1,7 +1,6 @@
 // utils/storage.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Key for storing voice notes
 const VOICE_NOTES_KEY = '@voice_notes';
 
 /**
