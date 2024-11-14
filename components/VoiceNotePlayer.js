@@ -2,14 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Button, Text, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
+import Svg, { Line } from 'react-native-svg';
 
 const VoiceNotePlayer = ({ uri }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(null); // Countdown time
-  const [duration, setDuration] = useState(null); // Store total duration of the recording
+  const [remainingTime, setRemainingTime] = useState(null);
+  const [duration, setDuration] = useState(null);
+  const [oscillogramData, setOscillogramData] = useState([]);
 
-  // Load and prepare the sound for playback
   const loadSound = async () => {
     if (uri) {
       try {
@@ -19,11 +20,11 @@ const VoiceNotePlayer = ({ uri }) => {
         );
         setSound(newSound);
 
-        // Set duration if the sound is successfully loaded
         if (status.isLoaded && status.durationMillis) {
           const durationInSeconds = Math.floor(status.durationMillis / 1000);
           setDuration(durationInSeconds);
-          setRemainingTime(durationInSeconds); // Initialize remaining time with total duration
+          setRemainingTime(durationInSeconds);
+          generateOscillogram(durationInSeconds); // Generate oscillogram data
         }
       } catch (error) {
         console.error("Error loading sound:", error);
@@ -31,34 +32,29 @@ const VoiceNotePlayer = ({ uri }) => {
     }
   };
 
-  // Function to play or stop the sound
   const handlePlayback = async () => {
     if (!sound) {
-      // Load sound if not already loaded
       await loadSound();
     }
 
     const status = await sound.getStatusAsync();
     if (status.isLoaded) {
       if (isPlaying) {
-        // Stop playback
         await sound.stopAsync();
         setIsPlaying(false);
-        setRemainingTime(duration); // Reset countdown to total duration
+        setRemainingTime(duration);
       } else {
-        // Play the recording
         await sound.playAsync();
         setIsPlaying(true);
 
-        // Start tracking playback status and update countdown
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isPlaying) {
             const currentPosition = Math.floor(status.positionMillis / 1000);
-            setRemainingTime(duration - currentPosition); // Update remaining time
+            setRemainingTime(duration - currentPosition);
           }
           if (status.didJustFinish) {
             setIsPlaying(false);
-            setRemainingTime(duration); // Reset countdown to total duration once finished
+            setRemainingTime(duration);
           }
         });
       }
@@ -67,7 +63,16 @@ const VoiceNotePlayer = ({ uri }) => {
     }
   };
 
-  // Format time in minutes and seconds
+  // Function to generate dummy oscillogram data
+  const generateOscillogram = (duration) => {
+    const data = [];
+    const numberOfLines = 50; // Number of lines in the oscillogram
+    for (let i = 0; i < numberOfLines; i++) {
+      data.push(Math.sin((i / numberOfLines) * Math.PI * 2) * 50); // Generate sine wave data
+    }
+    setOscillogramData(data);
+  };
+
   const formatTime = (seconds) => {
     if (seconds == null) return "0:00";
     const minutes = Math.floor(seconds / 60);
@@ -76,12 +81,9 @@ const VoiceNotePlayer = ({ uri }) => {
   };
 
   useEffect(() => {
-    // Load the sound when URI is passed
     if (uri) {
       loadSound();
     }
-
-    // Cleanup sound when the component unmounts
     return () => {
       if (sound) {
         sound.unloadAsync();
@@ -108,6 +110,23 @@ const VoiceNotePlayer = ({ uri }) => {
           Time remaining: {formatTime(remainingTime)}
         </Text>
       )}
+
+      {/* Oscillogram Visualization */}
+      <View style={styles.oscillogramContainer}>
+        <Svg height="100" width="100%">
+          {oscillogramData.map((yValue, index) => (
+            <Line
+              key={index}
+              x1={`${(index / oscillogramData.length) * 100}%`}
+              y1={50 - yValue}
+              x2={`${((index + 1) / oscillillogramData.length) * 100}%`}
+              y2={50 - yValue}
+              stroke="white"
+              strokeWidth="2"
+            />
+          ))}
+        </Svg>
+      </View>
     </View>
   );
 };
@@ -124,6 +143,14 @@ const styles = StyleSheet.create({
   timerText: {
     color: 'white',
     marginTop: 5,
+  },
+  oscillogramContainer: {
+    width: '100%',
+    height: 100,
+    marginTop: 10,
+    backgroundColor: '#222', // Background for the oscillogram
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
