@@ -22,6 +22,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRecordings, setFilteredRecordings] = useState([]);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const [recordingDuration, setRecordingDuration] = useState(0); // Track duration in seconds
+
+  let intervalId = null; // To store the interval for updating recording time
 
   // Start recording
   const startRecording = async () => {
@@ -37,6 +40,12 @@ export default function App() {
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         );
         setRecording(recording);
+        setRecordingDuration(0); // Reset duration when starting a new recording
+
+        // Update duration every second
+        intervalId = setInterval(() => {
+          setRecordingDuration((prevDuration) => prevDuration + 1);
+        }, 1000);
       } else {
         Alert.alert('Permission denied', 'Cannot access microphone');
       }
@@ -66,6 +75,9 @@ export default function App() {
       setFilteredRecordings(updatedRecordings);
       saveRecordings(updatedRecordings);
     }
+
+    // Clear the interval when stopping the recording
+    clearInterval(intervalId);
   };
 
   // Play or stop recording
@@ -165,7 +177,15 @@ export default function App() {
     } else if (option === 'Privacy Policy') {
       Linking.openURL('https://www.example.com/privacy-policy'); // Open privacy policy link
     } else if (option === 'Permissions') {
-      Linking.openURL('https://www.example.com/permissions'); // Open permissions link
+      // Permissions handling
+      Alert.alert(
+        'Permissions',
+        'This app requires access to your microphone. Do you allow access?',
+        [
+          { text: 'Allow', onPress: () => Alert.alert('Access Granted') },
+          { text: 'Not Allow', onPress: () => Alert.alert('Access Denied') },
+        ]
+      );
     } else if (option === 'Contact Us') {
       Linking.openURL('https://www.example.com/contact-us'); // Open contact us link
     }
@@ -173,7 +193,16 @@ export default function App() {
 
   useEffect(() => {
     loadRecordings();
+    return () => {
+      if (intervalId) clearInterval(intervalId); // Clean up interval on unmount
+    };
   }, []);
+
+  const formatDuration = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -227,24 +256,28 @@ export default function App() {
         <Ionicons name={recording ? 'pause' : 'mic'} size={60} color="white" />
       </TouchableOpacity>
 
+      {/* Display recording duration */}
+      {recording && <Text style={styles.duration}>{formatDuration(recordingDuration)}</Text>}
+
       <FlatList
         data={filteredRecordings}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => (
           <View style={styles.recordingItem}>
+            <Text style={styles.recordingText}>{item.name}</Text>
             <Text style={styles.recordingText}>
-              {item.name} - {item.duration}s
+              Duration: {formatDuration(item.duration)}
             </Text>
             <View style={styles.recordingActions}>
               <TouchableOpacity onPress={() => togglePlayRecording(item.uri, index)}>
                 <Ionicons
-                  name={currentlyPlaying === index ? 'stop' : 'play'}
-                  size={24}
-                  color={currentlyPlaying === index ? 'red' : 'green'}
+                  name={currentlyPlaying === index ? 'stop-circle' : 'play-circle'}
+                  size={30}
+                  color="white"
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteRecording(index)}>
-                <Ionicons name="trash" size={24} color="red" />
+                <Ionicons name="trash" size={30} color="red" />
               </TouchableOpacity>
             </View>
           </View>
@@ -284,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     marginBottom: 10,
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 2,
   },
   recordingText: {
     color: 'white',
