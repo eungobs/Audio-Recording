@@ -8,7 +8,7 @@ import {
   FlatList,
   Alert,
   Modal,
-  Linking
+  Linking,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,10 +21,16 @@ export default function App() {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRecordings, setFilteredRecordings] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
-  const [recordingDuration, setRecordingDuration] = useState(0); // Track duration in seconds
+  const [modalVisible, setModalVisible] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
 
-  let intervalId = null; // To store the interval for updating recording time
+  let intervalId = null;
+
+  // Settings options handler
+  const handleSettingsOption = (option) => {
+    Alert.alert('Option Selected', `You selected: ${option}`);
+    setModalVisible(false);
+  };
 
   // Start recording
   const startRecording = async () => {
@@ -40,9 +46,8 @@ export default function App() {
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         );
         setRecording(recording);
-        setRecordingDuration(0); // Reset duration when starting a new recording
+        setRecordingDuration(0);
 
-        // Update duration every second
         intervalId = setInterval(() => {
           setRecordingDuration((prevDuration) => prevDuration + 1);
         }, 1000);
@@ -76,7 +81,6 @@ export default function App() {
       saveRecordings(updatedRecordings);
     }
 
-    // Clear the interval when stopping the recording
     clearInterval(intervalId);
   };
 
@@ -96,7 +100,7 @@ export default function App() {
 
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri },
-        { shouldPlay: true }
+        { shouldPlay: true, volume: 1.0 }
       );
       setSound(newSound);
       setCurrentlyPlaying(index);
@@ -112,7 +116,7 @@ export default function App() {
     }
   };
 
-  // Save recordings to local storage
+  // Save recordings
   const saveRecordings = async (data) => {
     try {
       await AsyncStorage.setItem('@recordings', JSON.stringify(data));
@@ -121,7 +125,7 @@ export default function App() {
     }
   };
 
-  // Load recordings from local storage
+  // Load recordings
   const loadRecordings = async () => {
     try {
       const data = await AsyncStorage.getItem('@recordings');
@@ -152,7 +156,7 @@ export default function App() {
     }
   };
 
-  // Search recordings by name
+  // Search recordings
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === '') {
@@ -165,36 +169,10 @@ export default function App() {
     }
   };
 
-  // Handle Settings option press
-  const handleSettingsOption = (option) => {
-    setModalVisible(false); // Close modal when an option is selected
-    if (option === 'Record Quality') {
-      // Implement record quality functionality
-      Alert.alert('Record Quality', 'Choose the recording quality here...');
-    } else if (option === 'Block Calls While Recording') {
-      // Implement block calls functionality
-      Alert.alert('Block Calls', 'Block incoming calls while recording...');
-    } else if (option === 'Privacy Policy') {
-      Linking.openURL('https://www.example.com/privacy-policy'); // Open privacy policy link
-    } else if (option === 'Permissions') {
-      // Permissions handling
-      Alert.alert(
-        'Permissions',
-        'This app requires access to your microphone. Do you allow access?',
-        [
-          { text: 'Allow', onPress: () => Alert.alert('Access Granted') },
-          { text: 'Not Allow', onPress: () => Alert.alert('Access Denied') },
-        ]
-      );
-    } else if (option === 'Contact Us') {
-      Linking.openURL('https://www.example.com/contact-us'); // Open contact us link
-    }
-  };
-
   useEffect(() => {
     loadRecordings();
     return () => {
-      if (intervalId) clearInterval(intervalId); // Clean up interval on unmount
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
@@ -222,7 +200,10 @@ export default function App() {
             <Text style={styles.modalOption} onPress={() => handleSettingsOption('Record Quality')}>
               Record Quality
             </Text>
-            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Block Calls While Recording')}>
+            <Text
+              style={styles.modalOption}
+              onPress={() => handleSettingsOption('Block Calls While Recording')}
+            >
               Block Calls While Recording
             </Text>
             <Text style={styles.modalOption} onPress={() => handleSettingsOption('Privacy Policy')}>
@@ -250,13 +231,15 @@ export default function App() {
       />
 
       <TouchableOpacity
-        style={styles.microphone}
+        style={[
+          styles.microphone,
+          { backgroundColor: recording ? 'red' : 'gray' },
+        ]}
         onPress={recording ? stopRecording : startRecording}
       >
         <Ionicons name={recording ? 'pause' : 'mic'} size={60} color="white" />
       </TouchableOpacity>
 
-      {/* Display recording duration */}
       {recording && <Text style={styles.duration}>{formatDuration(recordingDuration)}</Text>}
 
       <FlatList
@@ -273,7 +256,7 @@ export default function App() {
                 <Ionicons
                   name={currentlyPlaying === index ? 'stop-circle' : 'play-circle'}
                   size={30}
-                  color="white"
+                  color={currentlyPlaying === index ? 'red' : 'green'}
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteRecording(index)}>
@@ -298,6 +281,8 @@ const styles = StyleSheet.create({
   microphone: {
     alignSelf: 'center',
     marginBottom: 20,
+    padding: 15,
+    borderRadius: 30,
   },
   settingsIcon: {
     position: 'absolute',
@@ -315,38 +300,43 @@ const styles = StyleSheet.create({
   },
   recordingItem: {
     backgroundColor: '#333',
-    marginBottom: 10,
     padding: 10,
-    borderRadius: 2,
+    marginBottom: 10,
+    borderRadius: 5,
   },
   recordingText: {
     color: 'white',
-    fontSize: 16,
   },
   recordingActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  duration: {
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   modalContainer: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
+    width: '80%',
+    backgroundColor: 'white',
     borderRadius: 10,
-    width: 300,
+    padding: 20,
+    alignItems: 'center',
   },
   modalOption: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#007BFF',
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 15,
   },
   closeModal: {
-    color: 'gray',
-    textAlign: 'center',
+    fontSize: 16,
+    color: 'blue',
     marginTop: 10,
   },
 });
