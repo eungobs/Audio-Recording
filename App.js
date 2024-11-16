@@ -7,6 +7,8 @@ import {
   StyleSheet,
   FlatList,
   Alert,
+  Modal,
+  Linking
 } from 'react-native';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +21,7 @@ export default function App() {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRecordings, setFilteredRecordings] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
 
   // Start recording
   const startRecording = async () => {
@@ -150,13 +153,64 @@ export default function App() {
     }
   };
 
+  // Handle Settings option press
+  const handleSettingsOption = (option) => {
+    setModalVisible(false); // Close modal when an option is selected
+    if (option === 'Record Quality') {
+      // Implement record quality functionality
+      Alert.alert('Record Quality', 'Choose the recording quality here...');
+    } else if (option === 'Block Calls While Recording') {
+      // Implement block calls functionality
+      Alert.alert('Block Calls', 'Block incoming calls while recording...');
+    } else if (option === 'Privacy Policy') {
+      Linking.openURL('https://www.example.com/privacy-policy'); // Open privacy policy link
+    } else if (option === 'Permissions') {
+      Linking.openURL('https://www.example.com/permissions'); // Open permissions link
+    } else if (option === 'Contact Us') {
+      Linking.openURL('https://www.example.com/contact-us'); // Open contact us link
+    }
+  };
+
   useEffect(() => {
     loadRecordings();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Ionicons name="settings-sharp" size={30} color="white" style={styles.settingsIcon} />
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <Ionicons name="settings-sharp" size={30} color="white" style={styles.settingsIcon} />
+      </TouchableOpacity>
+
+      {/* Modal for settings options */}
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Record Quality')}>
+              Record Quality
+            </Text>
+            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Block Calls While Recording')}>
+              Block Calls While Recording
+            </Text>
+            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Privacy Policy')}>
+              Privacy Policy
+            </Text>
+            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Permissions')}>
+              Permissions
+            </Text>
+            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Contact Us')}>
+              Contact Us
+            </Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeModal}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <TextInput
         style={styles.searchBar}
@@ -204,33 +258,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1c1c2b',
-    padding: 20,
-    alignItems: 'center',
-  },
-  searchBar: {
-    backgroundColor: '#2c2c4b',
-    color: 'white',
-    width: '100%',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
+    paddingTop: 50,
+    paddingLeft: 10,
+    paddingRight: 10,
   },
   microphone: {
-    marginTop: 20,
-    backgroundColor: '#2c2c4b',
-    padding: 30,
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  settingsIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  searchBar: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 10,
+    marginBottom: 10,
+    color: 'white',
   },
   recordingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#2c2c4b',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
-    width: '100%',
+    backgroundColor: '#333',
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 5,
   },
   recordingText: {
     color: 'white',
@@ -238,10 +292,28 @@ const styles = StyleSheet.create({
   },
   recordingActions: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'flex-end',
   },
-  settingsIcon: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+  },
+  modalOption: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#007BFF',
+  },
+  closeModal: {
+    color: 'gray',
+    textAlign: 'center',
+    marginTop: 10,
   },
 });
