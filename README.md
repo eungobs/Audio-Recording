@@ -18,7 +18,7 @@ The Voice Recorder App is a React Native application that allows users to record
 ## Installation
 1. **Clone the repository**:
    
-   git clone https://github.com/eungobs/voice-recorder-app.git
+   git clone https://github.com/eungobs/Audio-Recording.git
 
 Navigate into the project directory:
  cd voice-recorder-app
