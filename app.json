@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for recording audio."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,3 +29,4 @@
     }
   }
 }
+

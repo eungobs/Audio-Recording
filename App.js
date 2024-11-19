@@ -8,7 +8,6 @@ import {
   FlatList,
   Alert,
   Modal,
-  Linking,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,24 +22,42 @@ export default function App() {
   const [filteredRecordings, setFilteredRecordings] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [settings, setSettings] = useState({
+    recordQuality: false,
+    blockCalls: false,
+    permissions: false,
+  });
 
   let intervalId = null;
 
-  // Settings options handler
-  const handleSettingsOption = (option) => {
-    Alert.alert('Option Selected', `You selected: ${option}`);
-    setModalVisible(false);
+  const configureAudioSettings = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (error) {
+      console.error('Error configuring audio mode:', error);
+    }
   };
 
-  // Start recording
+  const toggleSetting = (setting) => {
+    setSettings((prev) => ({
+      ...prev,
+      [setting]: !prev[setting],
+    }));
+  };
+
   const startRecording = async () => {
     try {
       const permission = await Audio.requestPermissionsAsync();
       if (permission.status === 'granted') {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
+        await configureAudioSettings();
 
         const { recording } = await Audio.Recording.createAsync(
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
@@ -59,7 +76,6 @@ export default function App() {
     }
   };
 
-  // Stop recording
   const stopRecording = async () => {
     setRecording(null);
     if (recording) {
@@ -84,7 +100,6 @@ export default function App() {
     clearInterval(intervalId);
   };
 
-  // Play or stop recording
   const togglePlayRecording = async (uri, index) => {
     try {
       if (sound) {
@@ -100,7 +115,11 @@ export default function App() {
 
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri },
-        { shouldPlay: true, volume: 1.0 }
+        {
+          shouldPlay: true,
+          volume: 1.0,
+          isLooping: false,
+        }
       );
       setSound(newSound);
       setCurrentlyPlaying(index);
@@ -116,7 +135,6 @@ export default function App() {
     }
   };
 
-  // Save recordings
   const saveRecordings = async (data) => {
     try {
       await AsyncStorage.setItem('@recordings', JSON.stringify(data));
@@ -125,7 +143,6 @@ export default function App() {
     }
   };
 
-  // Load recordings
   const loadRecordings = async () => {
     try {
       const data = await AsyncStorage.getItem('@recordings');
@@ -139,7 +156,6 @@ export default function App() {
     }
   };
 
-  // Delete a recording
   const deleteRecording = (index) => {
     const updatedRecordings = recordings.filter((_, i) => i !== index);
     setRecordings(updatedRecordings);
@@ -156,7 +172,6 @@ export default function App() {
     }
   };
 
-  // Search recordings
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === '') {
@@ -170,6 +185,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    configureAudioSettings();
     loadRecordings();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -197,24 +213,33 @@ export default function App() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Record Quality')}>
-              Record Quality
-            </Text>
-            <Text
-              style={styles.modalOption}
-              onPress={() => handleSettingsOption('Block Calls While Recording')}
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: settings.recordQuality ? 'green' : 'gray' },
+              ]}
+              onPress={() => toggleSetting('recordQuality')}
             >
-              Block Calls While Recording
-            </Text>
-            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Privacy Policy')}>
-              Privacy Policy
-            </Text>
-            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Permissions')}>
-              Permissions
-            </Text>
-            <Text style={styles.modalOption} onPress={() => handleSettingsOption('Contact Us')}>
-              Contact Us
-            </Text>
+              <Text style={styles.modalOption}>Record Quality</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: settings.blockCalls ? 'green' : 'gray' },
+              ]}
+              onPress={() => toggleSetting('blockCalls')}
+            >
+              <Text style={styles.modalOption}>Block Calls While Recording</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                { backgroundColor: settings.permissions ? 'green' : 'gray' },
+              ]}
+              onPress={() => toggleSetting('permissions')}
+            >
+              <Text style={styles.modalOption}>Permissions</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Text style={styles.closeModal}>Close</Text>
             </TouchableOpacity>
@@ -274,35 +299,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1c1c2b',
-    paddingTop: 50,
-    paddingLeft: 10,
-    paddingRight: 10,
+    padding: 20,
+  },
+  searchBar: {
+    height: 50,
+    borderColor: '#aaa',
+    borderWidth: 1,
+    borderRadius: 10,
+    color: 'white',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    backgroundColor: '#333',
   },
   microphone: {
     alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     marginBottom: 20,
-    padding: 15,
-    borderRadius: 30,
   },
-  settingsIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  searchBar: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingLeft: 10,
-    marginBottom: 10,
+  duration: {
+    textAlign: 'center',
     color: 'white',
+    fontSize: 20,
+    marginBottom: 20,
   },
   recordingItem: {
-    backgroundColor: '#333',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
   },
   recordingText: {
     color: 'white',
@@ -310,33 +337,41 @@ const styles = StyleSheet.create({
   recordingActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 10,
   },
-  duration: {
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 20,
+  settingsIcon: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    width: '80%',
     backgroundColor: 'white',
-    borderRadius: 10,
     padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  optionButton: {
+    marginBottom: 10,
+    padding: 15,
+    borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   modalOption: {
     fontSize: 18,
-    color: '#333',
-    marginBottom: 15,
+    fontWeight: 'bold',
+    color: 'white',
   },
   closeModal: {
-    fontSize: 16,
-    color: 'blue',
-    marginTop: 10,
+    textAlign: 'center',
+    color: 'red',
+    fontWeight: 'bold',
+    marginTop: 20,
+    fontSize: 18,
   },
 });
