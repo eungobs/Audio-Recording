@@ -1,71 +1,95 @@
-Voice Recorder App
+# Voice Recorder App
 
+## Overview
 
-Overview
-The Voice Recorder App is a React Native application that allows users to record audio, play back recordings, and manage their audio files. It utilizes Expo's audio capabilities and AsyncStorage for data persistence. The app supports searching and filtering recordings, as well as settings management through a modal interface.
+The **Voice Recorder App** is a mobile application that lets you record audio, play back recordings, and manage your audio files. It's built with **React Native** and uses **Expo's audio capabilities** to make recording and playback easy. The app also stores your recordings locally using **AsyncStorage** for data persistence.
 
-Note: For the best user experience, it is recommended to view and test the app using a web browser via Expo's web support.
+## Key Features
 
-APKhttps://drive.google.com/file/d/1FE6Nrru0Eh4djpAQGESAkb8rn0VFpd0M/view?usp=sharing: 
+1. **Audio Recording**: 
+   - You can record audio with options for high-quality settings.
+   - The app will ask you to enter a name for your recording after you stop.
 
-Features
-Audio Recording: Record audio with options for high-quality settings.
+2. **Playback Controls**: 
+   - Tap the play icon next to a recording to listen to it.
+   - The play icon changes to a stop icon while the audio is playing.
 
-Playback Controls: Play, pause, and stop recorded audio.
+3. **Manage Recordings**: 
+   - Use the trash icon to delete a recording.
+   - Utilize the search bar to filter recordings by name.
 
-Manage Recordings: View, delete, and search recordings efficiently.
+4. **Settings Modal**: 
+   - Tap the settings icon to open a modal where you can view various options.
+   - Currently, the options are just alerts and don't perform any actions.
 
-Settings Modal: Access various settings options for user preferences.
+## Technologies Used
 
-Technologies Used
-React Native: For building the mobile application.
+To build this app, the following technologies were used:
 
-Expo AV: For handling audio recording and playback.
+- **React Native**: The framework for building the mobile application.
+- **Expo AV**: For handling audio recording and playback.
+- **AsyncStorage**: For local data storage of recordings.
+- **React Native Vector Icons**: For icons used in the UI.
 
-AsyncStorage: For local data storage of recordings.
+## Getting Started
 
-React Native Vector Icons: For icons used in the UI.
+### Prerequisites
 
-Installation
-Clone the repository:
+Before you can run the app on your machine, make sure you have:
 
-git clone https://github.com/eungobs/Audio-Recording.git
-Navigate into the project directory:
+- **Node.js** (version 16 or higher).
+- **Expo CLI** (install globally using `npm install -g expo-cli`).
+- **Git** (for downloading the project from GitHub).
 
-cd voice-recorder-app
-Install dependencies:
+### Installation Steps
 
-npm install
-Start the Expo server:
+1. **Clone the Repository**: Download the code for this app from GitHub. Open your terminal and type:
+   git clone https://github.com/eungobs/Audio-Recording.git
+  
 
-expo start
+2. **Navigate to the Project Directory**: Change into the project folder with:
+   cd voice-recorder-app
+  
 
-Usage
-Record Audio:
-Press the microphone button to start and stop recording. You will be prompted to enter a name for your recording after stopping.
+3. **Install Dependencies**: Download all the necessary packages for the app by typing:
+   npm install
+  
 
-Playback Recordings:
-Tap the play icon next to a recording to listen to it. The play icon changes to a stop icon while the audio is playing.
+4. **Start the Expo Server**: To test the app, start the Expo server by running:
+  
+   expo start
+   
 
-Manage Recordings:
-Use the trash icon to delete a recording. Utilize the search bar to filter recordings by name.
+## How to Use the App
 
-Settings:
-Tap the settings icon to open a modal where you can view various options (Note: Currently, the options are just alerts and do not perform any actions).
+### Record Audio
 
-Code Structure
-The main component of the app is the App function, which contains the logic for recording, playback, and managing recordings. Here’s a brief outline of the key functions:
+- Press the microphone button to start and stop recording.
+- You'll be prompted to enter a name for your recording after stopping.
 
-startRecording: Requests microphone permissions and starts audio recording.
+### Playback Recordings
 
-stopRecording: Stops the recording, prompts for a name, and saves the recording.
+- Tap the play icon next to a recording to listen to it.
+- The play icon changes to a stop icon while the audio is playing.
 
-togglePlayRecording: Plays or stops a selected recording.
+### Manage Recordings
 
-saveRecordings: Saves the recordings to AsyncStorage.
+- Use the trash icon to delete a recording.
+- Utilize the search bar to filter recordings by name.
 
-loadRecordings: Loads saved recordings from AsyncStorage.
+### Settings
 
-deleteRecording: Deletes a selected recording from the list.
+- Tap the settings icon to open a modal where you can view various options (Note: Currently, the options are just alerts and do not perform any actions).
 
-handleSearch: Filters recordings based on the search query.
+## Code Structure
+
+The main component of the app is the **App function**, which contains the logic for recording, playback, and managing recordings. Here's a brief outline of the key functions:
+
+- **startRecording**: Requests microphone permissions and starts audio recording.
+- **stopRecording**: Stops the recording, prompts for a name, and saves the recording.
+- **togglePlayRecording**: Plays or stops a selected recording.
+- **saveRecordings**: Saves the recordings to AsyncStorage.
+- **loadRecordings**: Loads saved recordings from AsyncStorage.
+- **deleteRecording**: Deletes a selected recording from the list.
+- **handleSearch**: Filters recordings based on the search query.
+
